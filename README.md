@@ -1,55 +1,51 @@
-# hl_event_server
+# Лабораторная работа №1 #
 
-## install C++
-sudo apt-get install gcc g++ cmake git libssl-dev zlib1g-dev librdkafka-dev mysql-server mysql-client libmysqlclient-dev libboost-all-dev
+Выполнил: Петрушин Влад, М8О-103М-20
 
-## install java
+## Сборка проекта ##
 
-sudo apt install openjdk-8-jdk
+```bash
+cmake configure .
+cmake .
+cmake --build ./
+```
 
-sudo apt install openjdk-8-jre
+## Настройка базы данных ##
 
-## install iginte
+1. create_db.sql
+2. gen_data.sql
 
-Download from https://ignite.apache.org/download.cgi#binaries
+Выполнение скрипта из файла:
 
-build platforms/cpp
+```bash
+source <имя файла>.sql;
+```
 
-## install CPPRDKafkfa
+## Запуск сервера ##
 
+Для запуска сервера следует выполнить команду:
 
-// https://github.com/edenhill/librdkafka
-https://github.com/mfontanini/cppkafka
-mkdir build
-cd build
-cmake <OPTIONS> ..
-make
-make install
+```bash
+sudo sh ./start.sh
+```
 
+Сервер работает на порту 8080.
 
-## Install poco
+## Тестирование с помощью gtest ##
 
-git clone -b master https://github.com/pocoproject/poco.git
+Запуск модульных тестов:
 
-cd poco
+```bash
+./gtests
+```
 
-mkdir cmake-build
+## Тестирование с помощью wrk ##
 
-cd cmake-build
+Нагрузочное тестирование производилось для 1, 2, 6 и 10 потоков при 50 подключениях в течение 30 секунд. Полученные данные (Requests/sec - количество запросов в секунду, Latency(ms) - задержка в миллисекундах):
 
-cmake ..
-
-cmake --build . --config Release
-
-sudo cmake --build . --target install
-
-## Install gtest
-sudo apt-get install libgtest-dev
-
-cd /usr/src/gtest/
-
-sudo cmake -DBUILD_SHARED_LIBS=ON
-
-sudo make
-
-sudo cp *.so /usr/lib
+Threads | Requests/sec | Latency(ms)
+---     | ---          | ---
+1       | 1.00k        | 22.70
+2       | 638.59       | 15.09
+6       | 218.50       | 12.01
+10      | 132.12       | 12.67
