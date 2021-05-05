@@ -45,7 +45,6 @@ using Poco::Util::OptionCallback;
 using Poco::Util::OptionSet;
 using Poco::Util::ServerApplication;
 
-
 #include "../../database/person.h"
 
 class PersonHandler : public HTTPRequestHandler
@@ -55,7 +54,7 @@ private:
     {
         if (name.length() < 3)
         {
-            reason = "Name must be at leas 3 signs";
+            reason = "Name must be at least 3 signs";
             return false;
         }
 
@@ -87,21 +86,52 @@ public:
         response.setContentType("application/json");
         std::ostream &ostr = response.send();
 
-        if(request.getMethod() == HTTPRequest::HTTP_GET) {
-            if (form.has("login")) {
+        if (request.getMethod() == HTTPRequest::HTTP_GET)
+        {
+
+            bool no_cache = false;
+
+            if (form.has("login"))
+            {
+
+                if (form.has("no_cache"))
+                    no_cache = true;
+
                 std::string login = form.get("login");
-                try {
+
+                // Шаблон «сквозное чтение»
+
+                if (!no_cache)
+                {
+                    try
+                    {
+                        database::Person result = database::Person::read_from_cache_by_login(login);
+                        Poco::JSON::Stringifier::stringify(result.toJSON(), ostr);
+                        return;
+                    }
+                    catch (...)
+                    {
+                    }
+                }
+
+                try
+                {
                     database::Person result = database::Person::read_by_login(login);
+                    std::cout << result.get_login() << ", " << result.get_first_name() << ", " << result.get_last_name() << std::endl;
+                    result.save_to_cache();
                     Poco::JSON::Stringifier::stringify(result.toJSON(), ostr);
                     return;
                 }
-                catch (...) {
+                catch (...)
+                {
                     ostr << "{ \"result\": false , \"reason\": \"not found\" }";
                     return;
                 }
-
-            } else if (form.has("first_name") && form.has("last_name")) {
-                try {
+            }
+            else if (form.has("first_name") && form.has("last_name"))
+            {
+                try
+                {
                     std::string fn = form.get("first_name");
                     std::string ln = form.get("last_name");
                     auto results = database::Person::search(fn, ln);
@@ -110,20 +140,22 @@ public:
                         arr.add(s.toJSON());
                     Poco::JSON::Stringifier::stringify(arr, ostr);
                 }
-                catch (...) {
+                catch (...)
+                {
                     ostr << "{ \"result\": false , \"reason\": \"not found\" }";
                     return;
                 }
                 return;
             }
-        
+
             auto results = database::Person::read_all();
             Poco::JSON::Array arr;
             for (auto s : results)
                 arr.add(s.toJSON());
             Poco::JSON::Stringifier::stringify(arr, ostr);
         }
-        else if(request.getMethod() == HTTPRequest::HTTP_POST)
+
+        else if (request.getMethod() == HTTPRequest::HTTP_POST)
         {
             if (form.has("login"))
                 if (form.has("first_name"))
@@ -159,6 +191,7 @@ public:
                                 try
                                 {
                                     person.save_to_mysql();
+                                    person.save_to_cache();
                                     ostr << "{ \"result\": true }";
                                     return;
                                 }
@@ -174,14 +207,15 @@ public:
                                 return;
                             }
                         }
-            ostr << "{ \"result\": false , \"reason\": \"" << "bad request" << "\" }";
+            ostr << "{ \"result\": false , \"reason\": \""
+                 << "bad request"
+                 << "\" }";
             return;
         }
     }
 
 private:
     std::string _format;
-
 };
 
 #endif

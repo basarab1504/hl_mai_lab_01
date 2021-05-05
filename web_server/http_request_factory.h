@@ -59,7 +59,7 @@ public:
         const HTTPServerRequest& request)
     {
         static std::string person="/person"; 
-        if (startsWith(request.getURI(),person)) return new PersonHandler(_format);
+        if (startsWith(request.getURI(), person)) return new PersonHandler(_format);
         return 0;
     }
 

@@ -40,15 +40,15 @@ using Poco::Util::ServerApplication;
 #include "http_request_factory.h"
 #include "../config/config.h"
 
-
-
 class HTTPWebServer : public Poco::Util::ServerApplication
 {
 public:
-    HTTPWebServer() : _helpRequested(false){
+    HTTPWebServer() : _helpRequested(false)
+    {
     }
 
-    ~HTTPWebServer(){
+    ~HTTPWebServer()
+    {
     }
 
 protected:
@@ -73,7 +73,7 @@ protected:
                 .repeatable(false)
                 .callback(OptionCallback<HTTPWebServer>(this, &HTTPWebServer::handleHelp)));
         options.addOption(
-            Option("host", "h", "set ip address for dtabase")
+            Option("host", "h", "set ip address for database")
                 .required(false)
                 .repeatable(false)
                 .argument("value")
@@ -107,7 +107,12 @@ protected:
                 .required(false)
                 .repeatable(false)
                 .callback(OptionCallback<HTTPWebServer>(this, &HTTPWebServer::handleInitDB)));
-        
+        options.addOption(
+            Option("cache_servers", "cs", "set ignite cache servers")
+                .required(false)
+                .repeatable(false)
+                .argument("value")
+                .callback(OptionCallback<HTTPWebServer>(this, &HTTPWebServer::handleCacheServers)));
     }
 
     void handleInitDB([[maybe_unused]] const std::string &name,
@@ -129,12 +134,12 @@ protected:
         Config::get().password() = value;
     }
 
-     void handleDatabase([[maybe_unused]] const std::string &name,
-                         [[maybe_unused]] const std::string &value)
+    void handleDatabase([[maybe_unused]] const std::string &name,
+                        [[maybe_unused]] const std::string &value)
     {
         std::cout << "database:" << value << std::endl;
         Config::get().database() = value;
-    }   
+    }
     void handlePort([[maybe_unused]] const std::string &name,
                     [[maybe_unused]] const std::string &value)
     {
@@ -143,13 +148,18 @@ protected:
     }
 
     void handleHost([[maybe_unused]] const std::string &name,
-                      [[maybe_unused]] const std::string &value)
+                    [[maybe_unused]] const std::string &value)
     {
         std::cout << "host:" << value << std::endl;
         Config::get().host() = value;
     }
 
-
+    void handleCacheServers([[maybe_unused]] const std::string &name,
+                            [[maybe_unused]] const std::string &value)
+    {
+        std::cout << "cache servers:" << value << std::endl;
+        Config::get().cache_servers() = value;
+    }
 
     void handleHelp([[maybe_unused]] const std::string &name,
                     [[maybe_unused]] const std::string &value)
@@ -170,11 +180,11 @@ protected:
         {
             unsigned short port = (unsigned short)
                                       config()
-                                          .getInt("HTTPWebServer.port", 80);
+                                          .getInt("HTTPWebServer.port", 8080);
             std::string format(
                 config().getString("HTTPWebServer.format",
                                    DateTimeFormat::SORTABLE_FORMAT));
-            
+
             ServerSocket svs(Poco::Net::SocketAddress("0.0.0.0", port));
             HTTPServer srv(new HTTPRequestFactory(format),
                            svs, new HTTPServerParams);
@@ -188,4 +198,5 @@ protected:
 private:
     bool _helpRequested;
 };
-#endif // !HTTPWEBSERVER
+
+#endif
