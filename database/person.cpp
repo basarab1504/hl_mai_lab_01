@@ -90,7 +90,6 @@ namespace database
             Poco::Data::Statement select(session);
             std::string sql_request = "SELECT id, login, first_name, last_name, age FROM Person where login=? ";
             sql_request += database::Database::sharding_hint(login, 3);
-            std::cout << sql_request << std::endl;
             Person p;
             select << sql_request,
                     into(p._id),
