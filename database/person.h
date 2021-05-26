@@ -7,7 +7,8 @@
 
 namespace database
 {
-    class Person{
+    class Person
+    {
     private:
         long _id;
         std::string _login;
@@ -16,17 +17,16 @@ namespace database
         unsigned char _age;
 
     public:
-
-        static Person fromJSON(const std::string & str);
+        static Person fromJSON(const std::string &str);
         Poco::JSON::Object::Ptr toJSON() const;
 
-        long             get_id() const;
+        long get_id() const;
         const std::string &get_login() const;
         const std::string &get_first_name() const;
         const std::string &get_last_name() const;
         unsigned char get_age() const;
 
-        long&        id();
+        long &id();
         std::string &login();
         std::string &first_name();
         std::string &last_name();
@@ -35,14 +35,15 @@ namespace database
         static void init();
         static Person read_by_login(std::string login);
         static std::vector<Person> read_all();
-        static std::vector<Person> search(std::string first_name,std::string last_name);
+        static std::vector<Person> search(std::string first_name, std::string last_name);
         void save_to_mysql();
 
         static void warm_up_cache();
         static Person read_from_cache_by_login(std::string login);
         void save_to_cache();
         static size_t size_of_cache();
+        void send_to_queue();
     };
 }
 
-#endif
+#endif //PERSON_H

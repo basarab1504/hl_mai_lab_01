@@ -8,6 +8,7 @@
 #include <Poco/Data/SessionFactory.h>
 #include <Poco/JSON/Parser.h>
 #include <Poco/Dynamic/Var.h>
+#include <cppkafka/cppkafka.h>
 
 #include <sstream>
 #include <exception>
@@ -31,12 +32,12 @@ namespace database
 
             // (re)create table
             Statement create_stmt(session);
-            create_stmt << "CREATE TABLE IF NOT EXISTS `Person` (`id` INT NOT NULL AUTO_INCREMENT,"
-                        << "`login` VARCHAR(256) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,"
-                        << "`first_name` VARCHAR(256) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,"
-                        << "`last_name` VARCHAR(256) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,"
-                        << "`age` TINYINT UNSIGNED NULL"
-                        << "PRIMARY KEY (`id`),UNIQUE KEY `login_hash` (`login`), KEY `fn` (`first_name`),KEY `ln` (`last_name`));",
+            create_stmt << "CREATE TABLE IF NOT EXISTS 'Person' ('id' INT NOT NULL AUTO_INCREMENT,"
+                        << "'login' VARCHAR(256) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,"
+                        << "'first_name' VARCHAR(256) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,"
+                        << "'last_name' VARCHAR(256) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,"
+                        << "'age' TINYINT UNSIGNED NULL"
+                        << "PRIMARY KEY ('id'),UNIQUE KEY 'login_hash' ('login'), KEY 'fn' ('first_name'),KEY 'ln' ('last_name'));",
                 now;
         }
 
@@ -90,15 +91,16 @@ namespace database
             Poco::Data::Statement select(session);
             std::string sql_request = "SELECT id, login, first_name, last_name, age FROM Person where login=? ";
             sql_request += database::Database::sharding_hint(login, 3);
+            std::cout << sql_request << std::endl;
             Person p;
             select << sql_request,
-                    into(p._id),
-                    into(p._login),
-                    into(p._first_name),
-                    into(p._last_name),
-                    into(p._age),
-                    use(login),
-                    range(0, 1); //  iterate over result set one row at a time
+                into(p._id),
+                into(p._login),
+                into(p._first_name),
+                into(p._last_name),
+                into(p._age),
+                use(login),
+                range(0, 1); //  iterate over result set one row at a time
             select.execute();
             return p;
         }
@@ -191,7 +193,7 @@ namespace database
                     into(p._age),
                     use(first_name),
                     use(last_name),
-                    range(0, 1);
+                    range(0, 1); //  iterate over result set one row at a time
 
                 while (!select.done())
                 {
@@ -227,7 +229,7 @@ namespace database
             std::string sql_request = "INSERT INTO Person (login, first_name, last_name, age) VALUES(?, ?, ?, ?) ";
             std::string comment = database::Database::sharding_hint(_login, 3);
             sql_request += comment;
-            std::cout << comment << std::endl;
+            //std::cout << comment << std::endl;
 
             insert << sql_request,
                 use(_login),
@@ -278,6 +280,7 @@ namespace database
         }
         catch (std::exception &err)
         {
+            //std::cout << "error:" << err.what() << std::endl;
             throw;
         }
     }
@@ -293,6 +296,21 @@ namespace database
     size_t Person::size_of_cache()
     {
         return database::Cache::get().size();
+    }
+
+    //Queue section
+
+    void Person::send_to_queue()
+    {
+        cppkafka::Configuration config = {
+            {"metadata.broker.list", Config::get().get_queue_host()}};
+
+        cppkafka::Producer producer(config);
+        std::stringstream ss;
+        Poco::JSON::Stringifier::stringify(toJSON(), ss);
+        std::string message = ss.str();
+        producer.produce(cppkafka::MessageBuilder(Config::get().get_queue_topic()).partition(0).payload(message));
+        producer.flush();
     }
 
     long Person::get_id() const

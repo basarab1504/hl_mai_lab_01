@@ -184,8 +184,8 @@ public:
                             {
                                 try
                                 {
-                                    person.save_to_mysql();
-                                    person.save_to_cache();
+                                    person.send_to_queue();
+
                                     ostr << "{ \"result\": true }";
                                     return;
                                 }
@@ -212,4 +212,4 @@ private:
     std::string _format;
 };
 
-#endif
+#endif //PERSON_HANDLER_H

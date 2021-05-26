@@ -34,28 +34,37 @@ namespace database
         return instance;
     }
 
-    void Cache::put(std::string key, const std::string& val){
-        _cache.Put(key,val);
+    void Cache::put(std::string key, const std::string &val)
+    {
+        _cache.Put(key, val);
     }
 
-    void Cache::remove(std::string key){
+    void Cache::remove(std::string key)
+    {
         _cache.Remove(key);
     }
 
-    size_t Cache::size(){
+    size_t Cache::size()
+    {
         return _cache.GetSize(ignite::thin::cache::CachePeekMode::ALL);
     }
 
-    void Cache::remove_all(){
-        _cache.RemoveAll();;
+    void Cache::remove_all()
+    {
+        _cache.RemoveAll();
+        ;
     }
 
-    bool Cache::get(std::string key, std::string& val){
-        try{
+    bool Cache::get(std::string key, std::string &val)
+    {
+        try
+        {
             val = _cache.Get(key);
             return true;
-        }catch(...){
+        }
+        catch (...)
+        {
             throw std::logic_error("key not found in cache");
         }
     }
-} 
+}

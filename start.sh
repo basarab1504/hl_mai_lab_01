@@ -1,1 +1,1 @@
-sudo ./hl_mai_lab_01 --host=127.0.0.1 --port=8080 --login=petrushin --password=qwerty123 --database=petrushin_labs --cache_servers='127.0.0.1:10800,127.0.0.1:10900'
+sudo ./hl_mai_lab_01 --host=127.0.0.1 --port=6033 --login=petrushin --password=qwerty123 --database=petrushin_labs --cache_servers='127.0.0.1:10800,127.0.0.1:10900' --queue=127.0.0.1:9092 --topic=event_server
